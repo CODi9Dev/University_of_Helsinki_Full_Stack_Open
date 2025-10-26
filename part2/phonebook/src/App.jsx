@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
@@ -11,33 +11,52 @@ function App() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
+    personService
+      .getAll()
+      .then(all => {
+        setPersons(all)
       })
   }, [])
-
+  
   const addPerson = (event) => {
     event.preventDefault()
     const personObj = {
-      id: persons.length + 1,
       name: newName,
       number: newPhone
     }
 
     const found = persons.find((person) => person.name === newName)
     if (found) {
-      alert(`${newName} is already added to phonebook`)
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one`)) {
+        personService.update(found.id, personObj)
+          .then(returnedPerson => {
+            setPersons(persons.map(person => person.id !== found.id ? person : returnedPerson))
+          })
+      }
       setNewName('')
       setNewPhone('')
       return false
     }
 
-    setPersons(persons.concat(personObj))
-    setNewName('')
-    setNewPhone('')
+    personService
+      .create(personObj)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewPhone('')
+      })
   }
+
+  const deletePerson = (person) => {
+    console.log('delete Peron ', person.id)
+    if (window.confirm(`Delete ${person.name} ?`)) {
+      personService.deletePerson(person.id)
+        .then(returnedPerson => {
+            setPersons(persons.filter(p => p.id !== returnedPerson.id))
+        })
+    }
+  }
+
   const handlePersonChange = (event) => {
     setNewName(event.target.value)
   }
@@ -65,7 +84,7 @@ function App() {
 
       <h2>Numbers</h2>
       
-      <Persons personsToShow={personsToShow} />
+      <Persons personsToShow={personsToShow} deletePerson={deletePerson} />
       
     </div>
   )
