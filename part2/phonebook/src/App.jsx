@@ -3,12 +3,18 @@ import personService from './services/persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 
 function App() {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [search, setSearch] = useState('')
+  const errorObj = {
+    msg: null,
+    type: null
+  }
+  const [customMessage, setCustomMessage] = useState(errorObj)
 
   useEffect(() => {
     personService
@@ -17,7 +23,13 @@ function App() {
         setPersons(all)
       })
   }, [])
-  
+
+  const hideMessage = () => {
+    setTimeout(() => {
+      setCustomMessage({msg: null, type: null})
+    }, 5000)
+  }
+
   const addPerson = (event) => {
     event.preventDefault()
     const personObj = {
@@ -31,6 +43,14 @@ function App() {
         personService.update(found.id, personObj)
           .then(returnedPerson => {
             setPersons(persons.map(person => person.id !== found.id ? person : returnedPerson))
+            setCustomMessage({msg: `${found.name} updated successfuly`, type: 'success'})
+            hideMessage()
+          })
+          .catch(error => {
+            const msg = error.message.includes('404') ? `${found.name} is no longer in the phonebook`: error.message.code
+            setCustomMessage({msg: msg, type: 'error'})
+            setPersons(persons, found.id)
+            hideMessage()
           })
       }
       setNewName('')
@@ -44,6 +64,8 @@ function App() {
         setPersons(persons.concat(returnedPerson))
         setNewName('')
         setNewPhone('')
+        setCustomMessage({msg: `Added ${newName}`, type: 'success'})
+        hideMessage()
       })
   }
 
@@ -53,6 +75,13 @@ function App() {
       personService.deletePerson(person.id)
         .then(returnedPerson => {
             setPersons(persons.filter(p => p.id !== returnedPerson.id))
+            setCustomMessage({msg: `Deleted ${person.name}`, type: 'success'})
+            hideMessage()
+        })
+        .catch(error => {
+          const msg = error.message.includes('404') ? `${person.name} is no longer in the phonebook`: error.message.code
+          setCustomMessage({msg: msg, type: 'error'})
+          hideMessage()
         })
     }
   }
@@ -76,6 +105,8 @@ function App() {
   return (
     <div>
       <h1>Phonebook</h1>
+
+      <Notification message={customMessage.msg} type={customMessage.type} />
 
       <Filter search={search} handleSearchChange={handleSearchChange} />
 
