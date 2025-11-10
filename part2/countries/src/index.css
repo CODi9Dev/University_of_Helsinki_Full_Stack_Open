@@ -1,0 +1,28 @@
+.countries__list div {
+    margin-bottom: 0.5em;
+}
+
+.countries__list div:first-of-type {
+    margin-top: 1.4em;
+}
+
+.countries__list button {
+    cursor: pointer;
+}
+
+.country__flag {
+    width: 150px;
+    border: 1px solid grey;
+}
+
+.weather-api {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+}
+
+.countries__footer {
+    border-top: 1px dashed lightgray;
+    padding-top: 5px;
+    margin-top: 2em;
+}
